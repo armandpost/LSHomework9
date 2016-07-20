@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## This code chunk "time series" is used to assess seasonality of a time series via decomposition and to assess
+## This code chunk "time series" is used to assess seasonality of a time series via decomposition and perform a seasonal adjustment and to assess the results.
 ```{r timeseries}
 
 ## install and load required pacakges
