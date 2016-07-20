@@ -1,5 +1,5 @@
 ---
-title: "stock analysis"
+title: "Live Session HW 9"
 author: "Armand Post"
 date: "July 13, 2016"
 output:
@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## This code chunk is used to assess seasonality of a time series via decomposition and to assess
+## This code chunk "time series" is used to assess seasonality of a time series via decomposition and to assess
 ```{r timeseries}
 
 ## install and load required pacakges
