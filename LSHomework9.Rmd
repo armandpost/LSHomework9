@@ -1,0 +1,139 @@
+---
+title: "stock analysis"
+author: "Armand Post"
+date: "July 13, 2016"
+output:
+    html_document:
+        keep_md: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## This code chunk is used to assess seasonality of a time series via decomposition and to assess
+```{r timeseries}
+
+## install and load required pacakges
+##install.packages("fpp")
+##install.packages("gsubfn")
+##install.packages("sqldf")
+
+library(fpp) #fpp package must be installed first
+##library(gsubfn) #gsubfn package must be installed first
+##library(sqldf) #sqldf package must be installed first
+
+
+## load and view initial dataset
+data(ukcars)
+ukcars
+str(ukcars)
+
+## replace values with an outlier for later to assess affect.
+ukcars2 <- replace(ukcars,14,500)
+ukcars3 <- replace(ukcars,54,500)
+ukcars4 <- replace(ukcars,94,500)
+
+
+## From the graph below, there appears to be seasonality with steady growth
+plot(ukcars, col="gray",
+  main="UK Car Sales (unadjusted)",
+  ylab="New orders index", xlab="")
+
+## perform a classical decomposition on the datasets
+fitd <- decompose(ukcars)
+fitd2 <- decompose(ukcars2)
+fitd3 <- decompose(ukcars3)
+fitd4 <- decompose(ukcars4)
+##head(fitd)
+
+## from the "seasonality graph below, the seasonality of UK cars is verified.  An upward trend can also be seen
+plot(fitd)
+
+## seasonally adjust the data
+eeadj <- seasadj(fitd)
+eeadj2 <- seasadj(fitd2)
+eeadj3 <- seasadj(fitd3)
+eeadj4 <- seasadj(fitd4)
+##head(eeadj)
+
+## plot seasonally adjusted data
+plot(eeadj,main = "seasonaly adjusted data")
+
+## I'm guessing this is another way of doing STL decomposition??  I found another way at the bottom of this .rmd
+ukcars2 <- ts(c(ukcars[1:54],(ukcars)[55]+200,(ukcars)[56:191]),start=c(1978,1),frequency=12)
+
+## Assess affects of outliers
+plot(fitd, xlab = "no outliers")
+
+## the early outlier appears to have affected the trend, but only near where the outlier occurs.  Seasonality scale changed, but overall it doesn't appear to be affected.
+
+plot(fitd2, xlab = "early outlier (1980)")
+
+## the middle outlier appears to have affected the trend, but only near where the outlier occurs.  Seasonality scale changed, but overall it doesn't appear to be affected.
+
+plot(fitd3, xlab = "middle outlier (1990)")
+
+## the late outlier appears to have affected the trend, but only near where the outlier occurs.  Seasonality scale changed, but overall it doesn't appear to be affected.
+
+plot(fitd4, xlab = "late outlier (2000)")
+
+## Perform a STL decomposition on the time series
+fitstld <- stl(ukcars, t.window=15, s.window="periodic", robust=TRUE)
+plot(fitstld)
+eeadjstl <- seasadj(fitstld)
+plot(eeadjstl)
+```
+
+
+
+## The code chunk "stock" is used to pull historical stock data for Penske, perform a log transformation, and finally, estimate and plot volatility.
+```{r stock}
+## financial Series
+##install.packages("tseries")
+
+## This code chunk pulls historical data for Penske stock.
+library(tseries)
+
+PENdata <- get.hist.quote("pen",quote="Close")
+length(PENdata)
+head(PENdata)
+
+## Assess initial data before log transformation
+plot(PENdata, main="Penske return data (non log transformed)")
+
+## The code below log transforms the Penske stock data.
+PENret <- log(lag(PENdata)) - log(PENdata)
+
+length(PENret)
+
+## Adjust for number of trading days in a year.
+PENvol <- sd(PENret) * sqrt(250) * 100  ## Roughly 250 trading days * 100 to make %
+length(PENdata)
+
+### Create Volatility Function
+get
+Vol <- function(d, logrets)
+{	var = 0
+	lam = 0
+	varlist <- c()
+	for (r in logrets) {
+		lam = lam*(1 - 1/d) + 1
+	var = (1 - 1/lam)*var + (1/lam)*r^2
+		varlist <- c(varlist, var)
+	}
+	sqrt(varlist)
+}
+
+### Create data with volatility estimates with various weightings
+volest <- Vol(10,PENret) ## weight = 1 - 1/d or 1 - 1/10 = .9
+volest2 <- Vol(30,PENret) ## weight = .70
+volest3 <- Vol(100,PENret) ## weight = .99
+
+### Plot the volatility estimates for Penske
+plot(volest,type="l", main="Penske log transformed estimated volatility")
+lines(volest2,type="l",col="red")
+lines(volest3, type = "l", col="blue")
+```
+
+
